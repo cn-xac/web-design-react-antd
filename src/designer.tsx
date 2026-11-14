@@ -9,7 +9,7 @@
  *
  * 与 Vue 的 Element Plus 适配层完全对称，差别只在 React 的受控通道是 value/onChange。
  */
-import type { ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 import {
   Button,
   ColorPicker,
@@ -18,8 +18,10 @@ import {
   Segmented,
   Select,
   Switch,
+  Tooltip,
 } from "antd";
 import type { DesignerControlProps } from "@x-ac/web-design-react/designer";
+import { antdActionAdapter } from "./actions";
 
 export interface SelectOption {
   label: string;
@@ -28,6 +30,14 @@ export interface SelectOption {
 
 interface SlotProps extends DesignerControlProps {
   children?: ReactNode;
+  /** Tooltip 槽位的文案（引擎只传这一个字段，见 core 的 DesignerTooltipProps） */
+  text?: string;
+  /**
+   * 下拉可搜索：引擎把该开关透传给设计器 Select（元素多时用）。
+   * 引擎的 DesignerControlProps 从 1.1.0 起带此字段，这里仍显式声明一次，
+   * 老版本引擎（1.0.x）下也能编译，不会被判成多余属性。
+   */
+  filterable?: boolean;
 }
 
 const normalizeOptions = (options: SlotProps["options"] = []): SelectOption[] =>
@@ -88,7 +98,7 @@ function AntdNumber({ value, onChange, min, max, step, disabled, controls, class
   );
 }
 
-function AntdSelect({ value, onChange, options, placeholder, disabled, clearable, className }: SlotProps) {
+function AntdSelect({ value, onChange, options, placeholder, disabled, clearable, filterable, className }: SlotProps) {
   return (
     <Select
       value={value === undefined || value === null ? undefined : (value as string | number)}
@@ -96,6 +106,9 @@ function AntdSelect({ value, onChange, options, placeholder, disabled, clearable
       placeholder={placeholder}
       disabled={disabled}
       allowClear={Boolean(clearable)}
+      // 可搜索：antd 用 showSearch + optionFilterProp 表达（默认按 label 过滤）
+      showSearch={Boolean(filterable)}
+      optionFilterProp={filterable ? "label" : undefined}
       className={className}
       onChange={(next) => onChange?.(next ?? "")}
     />
@@ -138,8 +151,22 @@ function AntdColor({ value, onChange, disabled, showAlpha, className }: SlotProp
 }
 
 /**
- * 完整 designer kit：7 个槽位全覆盖，不依赖引擎的原生回落。
- * 用 createDesignerKit 归一化（React 侧实现为浅拷贝 + 类型收窄），交给 defineReactAdapter。
+ * 说明提示槽位：引擎的 HelpTip 只认 `text`（文案）+ 默认插槽（问号按钮），
+ * antd 的 Tooltip 用 `title` 表达内容，差异在这里抹平。
+ * 注册后设计器里的问号浮层就是 antd 的浮层，与属性面板同观感。
+ */
+function AntdTooltip({ text, children }: SlotProps) {
+  return (
+    <Tooltip title={text} placement="top" mouseEnterDelay={0.15}>
+      {children as ReactElement}
+    </Tooltip>
+  );
+}
+
+/**
+ * 完整 designer kit：7 个控件槽位 + 说明提示 + 命令式提示，不依赖引擎的原生回落。
+ * notify 复用运行时的动作适配器，设计器内的提示与页面运行时同一条通道
+ * （宿主注入了 AntdAppBridge 就走 App context 的 message，否则回落静态 message）。
  */
 export const antdDesignerKit = {
   Button: AntdButton,
@@ -149,4 +176,8 @@ export const antdDesignerKit = {
   Switch: AntdSwitch,
   Segmented: AntdSegmented,
   ColorInput: AntdColor,
+  Tooltip: AntdTooltip,
+  // 包一层而不是直接给引用：引擎的 notify 第二个参数可省略，动作适配器要求必填
+  notify: (message: string, type: "success" | "warning" | "error" | "info" = "info") =>
+    antdActionAdapter.notify(message, type),
 };

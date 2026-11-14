@@ -4,6 +4,10 @@ Machine-readable reference for AI coding agents. Use this to generate **correct*
 `@x-ac/web-design-react-antd` without reading `node_modules`. Everything below is verified against the
 published types (`@x-ac/web-design-react` / `@x-ac/web-design-core` `1.0.0`) and this package's source.
 
+**Local dev note:** `pnpm dev` aliases the engine to the sibling workspace `project/packages/{core,react}/src`
+(`schemaVersion` 1.1.0, incl. `visibility`). Builds (`build:example` / Pages) keep resolving the published
+`^1.0.0` packages, so the published artifact never includes local source.
+
 **What this package is:** a React + Ant Design 6 *adapter* for a schema-driven page/form engine.
 The engine provides architecture; this package maps 30 protocol materials (`ec-*`) to antd components,
 plus the designer property-panel controls and message/confirm host capabilities. You describe the page
@@ -107,7 +111,7 @@ Notes:
 ```ts
 // PageSchema (required fields only)
 {
-  schemaVersion: "1.0.0",
+  schemaVersion: "1.1.0",
   id: string,
   type: "page",
   meta?: { title?, device?: "pc"|"pad"|"h5", description? },
@@ -302,7 +306,45 @@ const adapter = registerMaterials(antdAdapter, [
 
 ---
 
-## 11. Minimal runnable example (copy-paste)
+## 11. Display / hide conditions (r5u4Ul / rfD7Jv)
+
+- Engine 1.1.0 adds `NodeSchema.visibility` (`show` / `hide` condition groups), `resolveVisibility`, and a
+  `visibility?: ExternalVisibility` prop on `SchemaRenderer`. No adapter changes are required: the adapter
+  only supplies component implementations; the designer's StyleEditor + `ConditionDialog` ship with
+  `@x-ac/web-design-react/designer` and are reached through the dev alias described at the top of this file.
+- The condition editor uses native `select` / `input` inside the engine (CI-stub friendly). `antdDesignerKit`
+  and `UiAdapter.editors` do **not** cover it — do not re-implement it. Visual alignment to antd is done with
+  CSS only (`src/styles.css` → `.wbd-modal .cond__row ...`, 32px height / 6px radius / `#1677ff` focus).
+- Precedence: external `force` -> local `show` -> local `hide` -> external (non-forced) -> legacy `directives`
+  -> default visible. "Show wins over hide" means a hit on `show` ignores a simultaneous hit on `hide`.
+- `example/src/schema.ts` has a `g_visibility` group (show / hide / advanced), and `App.tsx` has a host-level
+  force switch wired to the renderer's `visibility` prop for browser verification.
+- Builds still target the published `^1.0.0` engine; writing `visibility` in example code is type-checked
+  against the local 1.1.0 source via `example/tsconfig.json` `paths`.
+
+---
+
+## 12. Designer kit slots (what the designer UI is made of)
+
+`antdDesignerKit` has **9** entries — 7 control slots + the help tooltip + the toast channel. All of them are
+optional; a missing slot silently falls back to the engine's native implementation (no error, no throw).
+
+| Slot | antd implementation | Notes |
+| --- | --- | --- |
+| `Button` / `Input` / `NumberInput` / `Switch` / `Segmented` / `ColorInput` | `Button` / `Input(.TextArea)` / `InputNumber` / `Switch` / `Segmented` / `ColorPicker` | engine contract is `value` + `onChange(value)` |
+| `Select` | `Select` | `filterable` (engine, 1.1.0+) maps to `showSearch` + `optionFilterProp="label"`; `clearable` maps to `allowClear` |
+| `Tooltip` | `Tooltip` | engine passes only `text` + children; mapped to `title` |
+| `notify` | `antdActionAdapter.notify` | same channel as runtime actions: `App.useApp()` message when bridged, static `message` otherwise |
+
+Two more adapter-side (CSS only) duties, both in `src/styles.css`:
+
+- **Validation error outline** — the React engine marks `.ux-field.is-error` and knows no library class names,
+  so the red border on `.ant-input` / `.ant-select` / `.ant-picker` / `.ant-input-number` is added here.
+- **Condition dialog alignment** — see §11.
+
+---
+
+## 13. Minimal runnable example (copy-paste)
 
 ```tsx
 // main.tsx / App.tsx
@@ -311,7 +353,7 @@ import { antdAdapter } from "@x-ac/web-design-react-antd";
 import "@x-ac/web-design-react/style.css";
 
 const page = {
-  schemaVersion: "1.0.0",
+  schemaVersion: "1.1.0",
   id: "demo",
   type: "page",
   children: [

@@ -51,7 +51,7 @@ import "@x-ac/web-design-react/style.css";
 
 // 这就是「页面长什么样」——纯数据，可来自后端 / 设计器导出
 const page = {
-  schemaVersion: "1.0.0",
+  schemaVersion: "1.1.0",
   id: "p1",
   type: "page",
   children: [
@@ -183,6 +183,10 @@ export function App() {
 `SchemaDesigner` 自带物料面板、拖拽画布、属性设置面板、顶栏（保存 / 预览 / 导出 JSON / HTML）。
 属性面板用的**就是本包注册的 antd 控件**，设计时与运行时同一套 UI 库。
 
+设计器里的配套细节也一并接上了 antd：问号说明浮层用 `Tooltip`、提示用 `message`（与运行时动作同一条通道）、
+元素多变的下拉（外部数据源参数映射、响应目标、选项数据源）带搜索框，校验失败字段与「显示 / 隐藏条件」弹窗
+里的原生控件按 antd 表单的尺寸与主色对齐。
+
 ### 动作（Actions）
 
 节点 `events` 里配置，纯数据、不含可执行代码：
@@ -220,7 +224,7 @@ export function App() {
 | `antdAdapter` | `UiAdapter` | 组装好的适配包（组件 + 物料 + 设计器控件 + 动作 + 绑定通道），传给 `ReactDesignProvider` 的 `adapter` |
 | `ANTD_COMPONENTS` | `Record` | `ec-*` → antd 组件映射表 |
 | `antdMaterials` | `Material[]` | 物料元数据（core 27 + antd 专有 3） |
-| `antdDesignerKit` | `DesignerKit` | 设计器 7 个槽位控件 |
+| `antdDesignerKit` | `DesignerKit` | 设计器控件：7 个输入控件 + 说明提示 `Tooltip` + 命令式提示 `notify` |
 | `antdActionAdapter` / `runActions` | — | 消息与确认框副作用 |
 | `AntdConfigProvider` / `AntdAppBridge` / `setAntdAppContext` | — | 可选的 antd `<App>` context 注入 |
 | `missingComponents` | `(adapter) => string[]` | 检查哪些协议物料没有组件实现（本包恒为 `[]`） |
@@ -302,7 +306,7 @@ const adapter = registerMaterials(antdAdapter, [
 
 ```bash
 pnpm install
-pnpm dev            # 本地示例站 http://127.0.0.1:5176
+pnpm dev            # 本地示例站 http://127.0.0.1:5176；dev 自动 alias 到兄弟仓 project/packages/{core,react}/src（engine 1.1.0，含显隐条件），build/Pages 仍走已发布 ^1.0.0 依赖
 pnpm typecheck      # 库 + 示例两轮 tsc
 pnpm test           # 用例（适配包 + 示例 Schema 运行时冒烟）
 pnpm build          # 库产物 dist/
@@ -329,4 +333,4 @@ pnpm check          # 以上全部 + build:example + pages:build
 - 引擎内核：`@x-ac/web-design-core`
 - React 引擎：`@x-ac/web-design-react`
 - 姊妹适配包（Vue）：`@x-ac/web-design-vue-element-plus`
-- AI 参考文档（机器可读）：见仓库根目录 [`AI.md`](./AI.md)
+- AI 参考文档（机器可读）：见仓库根目录 [`AGENTS.md`](./AGENTS.md)

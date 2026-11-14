@@ -85,11 +85,61 @@ describe("适配包物料表", () => {
     expect(antdMaterials.some((m) => m.component === "ec-segmented")).toBe(true);
   });
 
-  it("designer kit 覆盖全部 7 个槽位", () => {
+  it("designer kit 覆盖 7 个控件槽位 + 说明提示 + 命令式提示", () => {
     expect(Object.keys(antdDesignerKit).sort()).toEqual(
-      ["Button", "ColorInput", "Input", "NumberInput", "Segmented", "Select", "Switch"].sort(),
+      [
+        "Button",
+        "ColorInput",
+        "Input",
+        "NumberInput",
+        "Segmented",
+        "Select",
+        "Switch",
+        "Tooltip",
+        "notify",
+      ].sort(),
     );
     expect(antdAdapter.designer).toBeTruthy();
+  });
+});
+
+describe("designer kit 契约", () => {
+  it("Select 的 filterable 映射成 antd showSearch，未开时不带搜索", async () => {
+    const KitSelect = antdDesignerKit.Select;
+    const options = [
+      { label: "技术中心", value: "tech" },
+      { label: "产品中心", value: "product" },
+    ];
+    const host = await renderTree(
+      <>
+        <KitSelect options={options} value="tech" filterable />
+        <KitSelect options={options} value="tech" />
+      </>,
+    );
+
+    const selects = Array.from(host.querySelectorAll(".ant-select"));
+    expect(selects).toHaveLength(2);
+    expect(selects[0].className).toContain("ant-select-show-search");
+    expect(selects[1].className).not.toContain("ant-select-show-search");
+    // filterable 是设计器契约字段，只能被消费，不能漏成 DOM 属性
+    expect(host.innerHTML).not.toContain("filterable");
+  });
+
+  it("Tooltip 槽位渲染触发元素本身，不额外包一层引擎浮层", async () => {
+    const KitTooltip = antdDesignerKit.Tooltip as unknown as (props: {
+      text: string;
+      children: React.ReactElement;
+    }) => React.ReactElement;
+    const host = await renderTree(
+      <KitTooltip text="说明文案">
+        <button type="button" className="probe-trigger">
+          ?
+        </button>
+      </KitTooltip>,
+    );
+
+    expect(host.querySelector(".probe-trigger")?.textContent).toBe("?");
+    expect(host.querySelector(".wbd-tip")).toBeNull();
   });
 });
 
@@ -152,5 +202,48 @@ describe("设计器整合已注册组件", () => {
     expect(
       warnSpy.mock.calls.filter((call: unknown[]) => String(call[0]).includes("designer kit")),
     ).toHaveLength(0);
+  });
+
+  it("弹窗里的问号提示走 antd Tooltip，不再回落引擎原生浮层", async () => {
+    const withNode = {
+      ...createEmptyPage("弹窗"),
+      id: "p2",
+      children: [{ id: "s1", component: "select", props: { label: "部门" } }],
+    } as PageSchema;
+    const repo = createMemoryRepository([withNode]);
+    const host = await renderTree(
+      <ReactDesignProvider adapter={antdAdapter}>
+        <SchemaDesigner pageId="p2" repository={repo} />
+      </ReactDesignProvider>,
+    );
+
+    await act(async () => host.querySelector<HTMLElement>('[data-node-id="s1"]')!.click());
+    await act(async () => host.querySelector<HTMLElement>(".props__ext")!.click());
+
+    expect(host.querySelector(".wbd-modal__title")?.textContent).toContain("外部数据源");
+    // 响应映射默认是空的，加一条才会出现带问号说明的那一行
+    const addResp = Array.from(host.querySelectorAll<HTMLElement>("button")).find((button) =>
+      button.textContent?.includes("添加响应映射"),
+    )!;
+    await act(async () => addResp.click());
+
+    // 问号按钮还在（引擎提供），但外面那层原生浮层被 antd Tooltip 顶替了
+    expect(host.querySelectorAll(".wbd-tip__trigger").length).toBeGreaterThan(0);
+    expect(host.querySelector(".wbd-tip")).toBeNull();
+  });
+
+  it("notify 走 antd message 通道", async () => {
+    act(() => antdDesignerKit.notify("适配包提示", "success"));
+
+    const deadline = Date.now() + 800;
+    let hit: Element | null = null;
+    while (Date.now() < deadline && !hit) {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      });
+      hit = document.body.querySelector(".ant-message");
+    }
+    expect(hit).toBeTruthy();
+    expect(document.body.textContent).toContain("适配包提示");
   });
 });

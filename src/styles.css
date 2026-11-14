@@ -24,3 +24,83 @@
   color: #8c8c8c;
   font-size: 12px;
 }
+
+/* ===== 校验错误态：给 antd 控件补红色描边 =====
+   引擎只在字段外壳挂 .ux-field.is-error（不认识任何 UI 库的类名），
+   antd 控件由本包提供，所以描边在这里补；换别的适配包时这段样式不加载即静默失效。 */
+.ux-field.is-error .ant-input,
+.ux-field.is-error .ant-input-affix-wrapper,
+.ux-field.is-error .ant-input-number,
+.ux-field.is-error .ant-picker,
+.ux-field.is-error .ant-select:not(.ant-select-disabled):not(.ant-select-customize-input) .ant-select-selector {
+  border-color: var(--wb-danger, #ff4d4f);
+}
+
+.ux-field.is-error .ant-input-affix-wrapper .ant-input {
+  border-color: transparent;
+}
+
+.ux-field.is-error .ant-select-arrow,
+.ux-field.is-error .ant-picker-suffix {
+  color: var(--wb-danger, #ff4d4f);
+}
+
+/* ===== 显示 / 隐藏条件弹窗：引擎通用弹窗的 antd 视觉适配 =====
+   引擎的 ConditionDialog 为兼顾 CI stub 使用原生 select / input，
+   这里只在安装了本适配包时把尺寸、圆角、聚焦态对齐 antd 基础表单，
+   不改组件结构；选择器多带一层 .cond__row 提高特异性，避免与弹窗样式互相覆盖。 */
+.wbd-modal .cond__row .cond__select,
+.wbd-modal .cond__row .cond__value,
+.wbd-modal .cond__advanced .cond__expression {
+  height: 32px;
+  padding: 0 11px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  background: #fff;
+  color: rgba(0, 0, 0, 0.88);
+  font-size: 13px;
+  font-family: inherit;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.wbd-modal .cond__row .cond__select:hover,
+.wbd-modal .cond__row .cond__value:hover,
+.wbd-modal .cond__advanced .cond__expression:hover {
+  border-color: #4096ff;
+}
+
+.wbd-modal .cond__row .cond__select:focus,
+.wbd-modal .cond__row .cond__value:focus,
+.wbd-modal .cond__advanced .cond__expression:focus {
+  outline: none;
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+}
+
+/* 条件间关系：选中态用 antd 主色（与 Segmented / Radio.Button 的选中观感一致） */
+.wbd-modal .cond__modes .cond__mode.is-active {
+  border-color: #1677ff;
+  color: #1677ff;
+  background: #e6f4ff;
+}
+
+.wbd-modal .cond__ok {
+  border-color: #1677ff;
+  background: #1677ff;
+}
+
+.wbd-modal .cond__ok:hover {
+  border-color: #4096ff;
+  background: #4096ff;
+}
+
+@media (max-width: 640px) {
+  /* 窄屏下条件行允许换行，输入控件至少留 120px 可操作宽度 */
+  .wbd-modal .cond__row .cond__left,
+  .wbd-modal .cond__row .cond__value {
+    flex: 1 1 120px;
+    min-width: 0;
+  }
+}
