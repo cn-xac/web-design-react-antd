@@ -25,15 +25,13 @@ body {
   color: #1f2329;
 }
 
+/* 整体框架占满视口宽度（100%）：不限制整页宽度，内容也通栏不限宽。 */
 .demo {
   display: flex;
   flex-direction: column;
   height: 100%;
   gap: 12px;
   padding: 16px 20px 20px;
-  /* 整页水平居中：限制最大宽度，两侧留灰边（body 背景色），避免通栏铺满 */
-  max-width: 1280px;
-  margin: 0 auto;
 }
 
 .demo__head {
@@ -104,6 +102,12 @@ body {
   border-radius: 8px;
   padding: 20px;
   overflow: auto;
+}
+
+/* 渲染器里的渲染内容（.ux-page，引擎已按设备限宽，pc=960）在面板内水平居中；
+   整体框架与内容均不限宽，仅此处的表单内容需要居中。 */
+.demo__panel--runtime .demo__runtime .ux-page {
+  margin: 0 auto;
 }
 
 .demo__side {
@@ -286,6 +290,33 @@ body {
   font-family: var(--wb-mono, monospace);
   font-size: 10px;
   opacity: 0.7;
+}
+
+/* 外部显隐控制工具条（r5u4Ul）：常驻在渲染器内容顶部，验证 force 优先级 */
+.demo__visibility-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border: 1px solid #e5e6eb;
+  border-radius: 8px;
+  background: #f7f9fc;
+}
+
+.demo__visibility-note {
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .demo__visibility-bar {
+    gap: 8px;
+  }
+  .demo__head-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 900px) {

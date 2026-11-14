@@ -89,6 +89,58 @@ export function seedPage(): PageSchema {
         } as PageSchema["children"][number],
       ]),
 
+      group("g_visibility", "显示 / 隐藏条件（r5u4Ul）", [
+        {
+          id: "n_v_tip",
+          component: "ec-alert",
+          props: {
+            type: "info",
+            message: "条件配置在节点自身，显示优先于隐藏",
+            description: "切换「部门」「远程办公」观察下方字段显隐；上方「强制隐藏」开关演示宿主 force 覆盖本地条件。",
+            showIcon: true,
+          },
+        },
+        {
+          id: "n_grid_visibility",
+          component: "ec-grid",
+          props: { columns: 2, gap: 16 },
+          children: [
+            {
+              id: "n_v_show",
+              component: "ec-input",
+              props: { label: "显示条件（部门=技术中心）", placeholder: "把部门改成产品中心会隐藏" },
+              visibility: {
+                show: { mode: "and", rows: [{ left: "form.n_dept", operator: "eq", value: "技术中心" }] },
+              },
+            },
+            {
+              id: "n_v_hide",
+              component: "ec-input",
+              props: { label: "隐藏条件（远程办公为真）", placeholder: "关掉远程办公会出现" },
+              visibility: {
+                hide: { mode: "and", rows: [{ left: "form.n_remote", operator: "truthy" }] },
+              },
+            },
+            {
+              id: "n_v_advanced",
+              component: "ec-text",
+              props: { text: "高级条件命中：1 and (2 or 3)｜条件 1 为真、条件 2 为假、条件 3 取「司龄 > 0」。" },
+              visibility: {
+                show: {
+                  mode: "advanced",
+                  expression: "1 and (2 or 3)",
+                  rows: [
+                    { value: "true" },
+                    { value: "false" },
+                    { left: "form.n_count", operator: "gt", value: 0 },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ]),
+
       group("g_extra", "扩展字段（antd 专有与业务语义物料）", [
         {
           id: "n_grid_extra",

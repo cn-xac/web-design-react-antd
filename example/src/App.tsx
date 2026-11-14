@@ -14,9 +14,9 @@
  * 设计器顶栏「预览」会自动切到渲染器页签并给出提示（onPreview 联动）。
  */
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Segmented, Typography, Button, Empty, message } from "antd";
+import { Segmented, Typography, Button, Empty, Switch, message } from "antd";
 import { createMemoryRepository } from "@x-ac/web-design-core";
-import type { PageSchema, UiEventPayload } from "@x-ac/web-design-core";
+import type { ExternalVisibility, PageSchema, UiEventPayload } from "@x-ac/web-design-core";
 import { ReactDesignProvider, SchemaRenderer } from "@x-ac/web-design-react";
 import type { SchemaRendererHandle } from "@x-ac/web-design-react";
 import { SchemaDesigner } from "@x-ac/web-design-react/designer";
@@ -38,6 +38,12 @@ export default function App() {
   const [liveData, setLiveData] = useState<Record<string, unknown>>(seedData);
   const [events, setEvents] = useState<EventLine[]>([]);
   const [submitted, setSubmitted] = useState<unknown>(null);
+  // 宿主级外部显隐控制：force=true 忽略节点自身的 show / hide 条件
+  const [forceHidden, setForceHidden] = useState(false);
+  const visibility = useMemo(
+    (): ExternalVisibility => (forceHidden ? { n_v_show: { visible: false, force: true } } : {}),
+    [forceHidden],
+  );
   // 用 useRef 持有命令式句柄，避免 createRef 在每次 render 重建导致 getData() 读不到
   const rendererRef = useRef<SchemaRendererHandle>(null);
 
@@ -117,28 +123,28 @@ export default function App() {
     <AntdConfigProvider>
       <main className="demo">
         <header className="demo__head">
-          <div className="demo__head-row">
-            <Typography.Title level={4} style={{ margin: 0 }}>
-              @x-ac/web-design-react-antd
-            </Typography.Title>
-            <Segmented
-              className="demo__tabs"
-              value={tab}
-              options={[
-                { label: "设计器", value: "designer" },
-                { label: "渲染器", value: "runtime" },
-                { label: "组件实例", value: "gallery" },
-                { label: "适配包清单", value: "adapter" },
-              ]}
-              onChange={(value) => setTab(value as TabKey)}
-            />
-          </div>
-          <Typography.Paragraph type="secondary" className="demo__desc" style={{ marginBottom: 0 }}>
-            引擎只提供架构；适配包注册组件与组件配置，引擎整合成设计器与渲染器。属性设置面板用的也是这里注册的 Ant Design 组件。
-          </Typography.Paragraph>
-        </header>
+            <div className="demo__head-row">
+              <Typography.Title level={4} style={{ margin: 0 }}>
+                @x-ac/web-design-react-antd
+              </Typography.Title>
+              <Segmented
+                className="demo__tabs"
+                value={tab}
+                options={[
+                  { label: "设计器", value: "designer" },
+                  { label: "渲染器", value: "runtime" },
+                  { label: "组件实例", value: "gallery" },
+                  { label: "适配包清单", value: "adapter" },
+                ]}
+                onChange={(value) => setTab(value as TabKey)}
+              />
+            </div>
+            <Typography.Paragraph type="secondary" className="demo__desc" style={{ marginBottom: 0 }}>
+              引擎只提供架构；适配包注册组件与组件配置，引擎整合成设计器与渲染器。属性设置面板用的也是这里注册的 Ant Design 组件。
+            </Typography.Paragraph>
+          </header>
 
-        {tab === "designer" ? (
+          {tab === "designer" ? (
           <section className="demo__panel demo__panel--designer">
             <div className="demo__tip">
               左侧拖入物料 → 右侧属性面板（antd 输入框 / 下拉 / 开关 / 取色）配置 → 点顶栏「保存」，再切到渲染器查看效果。
@@ -159,11 +165,23 @@ export default function App() {
         ) : tab === "runtime" ? (
           <section className="demo__panel demo__panel--runtime">
             <div className="demo__runtime">
+              <div className="demo__visibility-bar">
+                <Switch
+                  checkedChildren="强制隐藏"
+                  unCheckedChildren="本地判定"
+                  checked={forceHidden}
+                  onChange={setForceHidden}
+                />
+                <Typography.Text type="secondary" className="demo__visibility-note">
+                  「显示条件」字段：宿主 force 优先于节点自身条件
+                </Typography.Text>
+              </div>
               <ReactDesignProvider adapter={antdAdapter}>
                 <SchemaRenderer
                   ref={rendererRef}
                   page={schema}
                   data={seedData}
+                  visibility={visibility}
                   onDataChange={onDataChange}
                   onNodeEvent={onNodeEvent}
                   onEvent={onEvent}
