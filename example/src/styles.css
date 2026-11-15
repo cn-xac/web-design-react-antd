@@ -7,7 +7,13 @@ body,
 #root {
   height: 100%;
   margin: 0;
-  /* 视口固定：文档级滚动一律禁用，滚动只发生在各区域容器内部 */
+}
+
+/* 视口固定：文档级滚动禁用，滚动只发生在各区域容器内部。
+   关键：overflow 只加在 #root，不要加在 body。
+   antd 的下拉 / 弹出层默认挂到 body，body 一旦 overflow:hidden 就会成为裁剪容器，
+   弹层被裁掉后表现就是「点下拉没反应 / 看不到选项」。 */
+#root {
   overflow: hidden;
 }
 

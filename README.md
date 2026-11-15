@@ -51,7 +51,7 @@ import "@x-ac/web-design-react/style.css";
 
 // 这就是「页面长什么样」——纯数据，可来自后端 / 设计器导出
 const page = {
-  schemaVersion: "1.1.0",
+  schemaVersion: "1.3.0",
   id: "p1",
   type: "page",
   children: [
@@ -306,7 +306,7 @@ const adapter = registerMaterials(antdAdapter, [
 
 ```bash
 pnpm install
-pnpm dev            # 本地示例站 http://127.0.0.1:5176；dev 自动 alias 到兄弟仓 project/packages/{core,react}/src（engine 1.1.0，含显隐条件），build/Pages 仍走已发布 ^1.0.0 依赖
+pnpm dev            # 本地示例站 http://127.0.0.1:5176；dev 自动 alias 到兄弟仓 project/packages/{core,react}/src（engine 1.3.0，含显隐条件），build/Pages 仍走已发布 ^1.0.0 依赖
 pnpm typecheck      # 库 + 示例两轮 tsc
 pnpm test           # 用例（适配包 + 示例 Schema 运行时冒烟）
 pnpm build          # 库产物 dist/

@@ -20,7 +20,7 @@ import type { ExternalVisibility, PageSchema, UiEventPayload } from "@x-ac/web-d
 import { ReactDesignProvider, SchemaRenderer } from "@x-ac/web-design-react";
 import type { SchemaRendererHandle } from "@x-ac/web-design-react";
 import { SchemaDesigner } from "@x-ac/web-design-react/designer";
-import { antdAdapter, AntdConfigProvider } from "@x-ac/web-design-react-antd";
+import { antdAdapter } from "@x-ac/web-design-react-antd";
 import { PAGE_ID, seedPage, seedData } from "./schema";
 import { AdapterPanel } from "./AdapterPanel";
 import { GalleryPanel } from "./GalleryPanel";
@@ -120,7 +120,7 @@ export default function App() {
   };
 
   return (
-    <AntdConfigProvider>
+    <>
       <main className="demo">
         <header className="demo__head">
             <div className="demo__head-row">
@@ -237,6 +237,6 @@ export default function App() {
           </section>
         )}
       </main>
-    </AntdConfigProvider>
+    </>
   );
 }

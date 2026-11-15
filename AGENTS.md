@@ -5,7 +5,7 @@ Machine-readable reference for AI coding agents. Use this to generate **correct*
 published types (`@x-ac/web-design-react` / `@x-ac/web-design-core` `1.0.0`) and this package's source.
 
 **Local dev note:** `pnpm dev` aliases the engine to the sibling workspace `project/packages/{core,react}/src`
-(`schemaVersion` 1.1.0, incl. `visibility`). Builds (`build:example` / Pages) keep resolving the published
+(`schemaVersion` 1.3.0, incl. `visibility`). Builds (`build:example` / Pages) keep resolving the published
 `^1.0.0` packages, so the published artifact never includes local source.
 
 **What this package is:** a React + Ant Design 6 *adapter* for a schema-driven page/form engine.
@@ -111,7 +111,7 @@ Notes:
 ```ts
 // PageSchema (required fields only)
 {
-  schemaVersion: "1.1.0",
+  schemaVersion: "1.3.0",
   id: string,
   type: "page",
   meta?: { title?, device?: "pc"|"pad"|"h5", description? },
@@ -314,19 +314,21 @@ const adapter = registerMaterials(antdAdapter, [
 
 ## 11. Display / hide conditions (r5u4Ul / rfD7Jv)
 
-- Engine 1.1.0 adds `NodeSchema.visibility` (`show` / `hide` condition groups), `resolveVisibility`, and a
-  `visibility?: ExternalVisibility` prop on `SchemaRenderer`. No adapter changes are required: the adapter
-  only supplies component implementations; the designer's StyleEditor + `ConditionDialog` ship with
-  `@x-ac/web-design-react/designer` and are reached through the dev alias described at the top of this file.
+- Engine 1.3.0 defines `NodeSchema.visibility` as `{ when: ConditionGroup; action?: "show" | "hide" }`,
+  plus `resolveVisibility`, and a `visibility?: ExternalVisibility` prop on `SchemaRenderer`. No adapter
+  changes are required: the adapter only supplies component implementations; the designer's StyleEditor +
+  `ConditionDialog` ship with `@x-ac/web-design-react/designer` and are reached through the dev alias
+  described at the top of this file.
 - The condition editor uses native `select` / `input` inside the engine (CI-stub friendly). `antdDesignerKit`
   and `UiAdapter.editors` do **not** cover it — do not re-implement it. Visual alignment to antd is done with
   CSS only (`src/styles.css` → `.wbd-modal .cond__row ...`, 32px height / 6px radius / `#1677ff` focus).
-- Precedence: external `force` -> local `show` -> local `hide` -> external (non-forced) -> legacy `directives`
-  -> default visible. "Show wins over hide" means a hit on `show` ignores a simultaneous hit on `hide`.
-- `example/src/schema.ts` has a `g_visibility` group (show / hide / advanced), and `App.tsx` has a host-level
-  force switch wired to the renderer's `visibility` prop for browser verification.
+- Precedence: external `force` -> local `when` -> external (non-forced) -> legacy `directives` -> default
+  visible. `when` is a complete boolean: it evaluates to `action` on a hit and to the opposite action on a
+  miss, so there is no "neither branch" state. The old `show` / `hide` dual groups are gone.
+- `example/src/schema.ts` has a `g_visibility` group (hit-show / hit-hide / advanced), and `App.tsx` has a
+  host-level force switch wired to the renderer's `visibility` prop for browser verification.
 - Builds still target the published `^1.0.0` engine; writing `visibility` in example code is type-checked
-  against the local 1.1.0 source via `example/tsconfig.json` `paths`.
+  against the local 1.3.0 source via `example/tsconfig.json` `paths`.
 
 ---
 
@@ -359,7 +361,7 @@ import { antdAdapter } from "@x-ac/web-design-react-antd";
 import "@x-ac/web-design-react/style.css";
 
 const page = {
-  schemaVersion: "1.1.0",
+  schemaVersion: "1.3.0",
   id: "demo",
   type: "page",
   children: [

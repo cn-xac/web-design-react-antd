@@ -10,7 +10,8 @@
  * 节点 id 同时是自动绑定的数据键（form.<id>）。
  */
 import { createEmptyPage } from "@x-ac/web-design-core";
-import type { PageSchema } from "@x-ac/web-design-core";
+import type { ExternalDataSource, PageSchema } from "@x-ac/web-design-core";
+import { EXTERNAL_API } from "./mock/install-mock";
 
 export const PAGE_ID = "demo";
 
@@ -22,11 +23,99 @@ const group = (id: string, title: string, children: PageSchema["children"]): Pag
   children,
 }) as PageSchema["children"][number];
 
+/**
+ * 外部数据源（页面级集中配置，节点只用 externalRef 引用）。
+ * 四个源覆盖四类能力，数据全部来自 src/mock/external-data.json：
+ * - src_dept：选项数据源，页面加载即取部门字典喂给下拉；
+ * - src_emp：输入候选，输入 ≥1 字拉员工列表，双映射（回填值 + 候选）；
+ * - src_profile：单条对象响应，也会成为一条候选（不需要先包成数组）；
+ * - src_goods：子表单子映射，把响应数组逐行映射成明细对象。
+ */
+const EXTERNAL_SOURCES: Record<string, ExternalDataSource> = {
+  src_dept: {
+    id: "src_dept",
+    name: "部门字典（选项数据源）",
+    url: EXTERNAL_API.departments,
+    asOptions: true,
+    listField: "list",
+    responses: [
+      {
+        scopePath: "options.x_dept",
+        shape: "select",
+        labelField: "deptName",
+        valueField: "deptCode",
+      },
+    ],
+  },
+  src_emp: {
+    id: "src_emp",
+    name: "员工搜索（选中后回填个人档案）",
+    url: EXTERNAL_API.employees,
+    triggerLength: 1,
+    // 列表字段属于数据源：数组里的每一项都会变成一条候选
+    listField: "list",
+    responses: [
+      // 候选源：写给「数据源拥有者」这个输入框（员工搜索）
+      {
+        scopePath: "options.x_emp",
+        shape: "select",
+        labelField: "empName",
+        valueField: "empId",
+        display: "{{data.empName}} · {{data.deptName}}",
+      },
+      // 回填目标：选中某条候选后，把这条记录的其它字段写进个人档案
+      {
+        scopePath: "form.x_profile",
+        shape: "form",
+        display: "{{data.empName}} · {{data.deptName}} · {{data.mobile}}",
+      },
+    ],
+  },
+  src_goods: {
+    id: "src_goods",
+    name: "订单明细（子表单子映射）",
+    url: EXTERNAL_API.orderDetails,
+    listField: "list",
+    responses: [
+      {
+        scopePath: "form.externalGoods",
+        shape: "form",
+        subMaps: [
+          { field: "xg_name", from: "goodsName" },
+          { field: "xg_qty", from: "qty" },
+          { field: "xg_price", from: "price" },
+        ],
+      },
+    ],
+  },
+};
+
 export function seedPage(): PageSchema {
   return {
     ...createEmptyPage("Ant Design 适配层完整示例"),
     id: PAGE_ID,
-    state: {},
+    // 外部数据源的兜底值放进 state，设计器画布（不真取数）同样能看到效果；
+    // 渲染器由宿主传入 seedData（优先），dev 下再被接口结果覆盖。
+    state: {
+      form: {
+        x_profile: "",
+        externalGoods: [
+          { xg_name: "机械键盘", xg_qty: 2, xg_price: 399 },
+          { xg_name: "27 寸显示器", xg_qty: 1, xg_price: 1299 },
+        ],
+      },
+      options: {
+        x_dept: [
+          { label: "技术中心", value: "D001" },
+          { label: "产品中心", value: "D002" },
+        ],
+        x_emp: [
+          { label: "张三 · 技术中心", value: "E1001" },
+          { label: "李四 · 产品中心", value: "E1002" },
+        ],
+      },
+    },
+    externalSources: EXTERNAL_SOURCES,
     children: [
       {
         id: "n_title",
@@ -95,8 +184,8 @@ export function seedPage(): PageSchema {
           component: "ec-alert",
           props: {
             type: "info",
-            message: "条件配置在节点自身，显示优先于隐藏",
-            description: "切换「部门」「远程办公」观察下方字段显隐；上方「强制隐藏」开关演示宿主 force 覆盖本地条件。",
+            message: "一组条件 + 命中动作，未命中自动取反",
+            description: "切换「部门」「远程办公」「司龄」观察下方字段显隐；上方「强制隐藏」开关演示宿主 force 覆盖本地条件。",
             showIcon: true,
           },
         },
@@ -108,25 +197,28 @@ export function seedPage(): PageSchema {
             {
               id: "n_v_show",
               component: "ec-input",
-              props: { label: "显示条件（部门=技术中心）", placeholder: "把部门改成产品中心会隐藏" },
+              props: { label: "命中显示（部门=技术中心）", placeholder: "改成产品中心即隐藏" },
               visibility: {
-                show: { mode: "and", rows: [{ left: "form.n_dept", operator: "eq", value: "技术中心" }] },
+                action: "show",
+                when: { mode: "and", rows: [{ left: "form.n_dept", operator: "eq", value: "技术中心" }] },
               },
             },
             {
               id: "n_v_hide",
               component: "ec-input",
-              props: { label: "隐藏条件（远程办公为真）", placeholder: "关掉远程办公会出现" },
+              props: { label: "命中隐藏（远程办公为真）", placeholder: "关掉远程办公即显示" },
               visibility: {
-                hide: { mode: "and", rows: [{ left: "form.n_remote", operator: "truthy" }] },
+                action: "hide",
+                when: { mode: "and", rows: [{ left: "form.n_remote", operator: "truthy" }] },
               },
             },
             {
               id: "n_v_advanced",
               component: "ec-text",
-              props: { text: "高级条件命中：1 and (2 or 3)｜条件 1 为真、条件 2 为假、条件 3 取「司龄 > 0」。" },
+              props: { text: "高级条件命中显示：1 and (2 or 3)｜条件 1 为真、条件 2 为假、条件 3 取「司龄 > 0」。司龄归零即隐藏。" },
               visibility: {
-                show: {
+                action: "show",
+                when: {
                   mode: "advanced",
                   expression: "1 and (2 or 3)",
                   rows: [
@@ -189,6 +281,68 @@ export function seedPage(): PageSchema {
         { id: "n_container", component: "ec-container", props: { padding: 8 }, children: [
           { id: "n_nested_text", component: "ec-text", props: { text: "容器内可以放任意子节点" } },
         ] } as PageSchema["children"][number],
+      ]),
+
+      group("g_external", "外部数据源（页面级配置 → 元素消费）", [
+        {
+          id: "x_external_tip",
+          component: "ec-alert",
+          props: {
+            type: "success",
+            message: "外部数据源示例（静态站内置 mock，无需后端）",
+            description:
+              "数据来自 src/mock/external-data.json。部门下拉=选项数据源；员工搜索=输入候选（输入「张」或「李」）；个人档案=显示内容模板回填；下方明细=子表单子映射。dev 下页面加载即真实取数，build 产物用同值兜底。",
+            showIcon: true,
+          },
+        },
+        {
+          id: "n_grid_external",
+          component: "ec-grid",
+          props: { columns: 2 },
+          children: [
+            {
+              id: "x_dept",
+              component: "ec-select",
+              props: {
+                label: "部门（远程选项）",
+                placeholder: "选项来自 /mock/api/departments",
+                options: "{{options.x_dept}}",
+                clearable: true,
+                showSearch: true,
+              },
+              externalRef: "src_dept",
+            },
+            {
+              id: "x_emp",
+              component: "ec-input",
+              props: {
+                label: "员工搜索（输入候选）",
+                placeholder: "输入「张」或「李」试试",
+                options: "{{options.x_emp}}",
+                clearable: true,
+              },
+              externalRef: "src_emp",
+            },
+            {
+              id: "x_profile",
+              component: "ec-input",
+              props: {
+                label: "个人档案（选中员工后回填）",
+                placeholder: "在上方选一个员工",
+              },
+            },
+          ],
+        } as PageSchema["children"][number],
+        {
+          id: "x_goods_form",
+          component: "ec-subform",
+          props: { label: "订单明细（外部数据源子映射）", itemPath: "externalGoods", addText: "添加明细" },
+          children: [
+            { id: "xg_name", component: "ec-input", props: { label: "商品名" }, externalRef: "src_goods" },
+            { id: "xg_qty", component: "ec-number", props: { label: "数量", min: 1, precision: 0 } },
+            { id: "xg_price", component: "ec-number", props: { label: "单价", min: 0, precision: 2 } },
+          ],
+        } as PageSchema["children"][number],
       ]),
 
       group("g_grid", "栅格布局（row / col，core 通用 24 栅格）", [
@@ -305,11 +459,18 @@ export const seedData = {
     n_radio: "混合",
     n_checkbox: ["React", "TypeScript"],
     n_dict: "已发布",
-    n_org: "技术中心 / 平台组",
+    n_org: "hq-tech",
     n_cascader: ["华东"],
     n_rate: 4.5,
     n_slider: 60,
     n_remote: true,
+    // 外部数据源兜底值：build 产物（无运行时取数）直接显示这些，dev 下会被接口结果覆盖
+    x_emp: "",
+    x_profile: "",
+    externalGoods: [
+      { xg_name: "机械键盘", xg_qty: 2, xg_price: 399 },
+      { xg_name: "27 寸显示器", xg_qty: 1, xg_price: 1299 },
+    ],
     orders: [
       {
         o_no: "A001",
@@ -319,6 +480,21 @@ export const seedData = {
           { g_name: "显示器", g_qty: 2 },
         ],
       },
+    ],
+  },
+  // 选项数据源 / 输入候选的静态兜底（dev 下由外部数据源按 mock 响应覆盖）
+  options: {
+    x_dept: [
+      { label: "技术中心", value: "D001" },
+      { label: "产品中心", value: "D002" },
+      { label: "设计中心", value: "D003" },
+      { label: "市场中心", value: "D004" },
+    ],
+    x_emp: [
+      { label: "张三 · 技术中心", value: "E1001" },
+      { label: "李四 · 产品中心", value: "E1002" },
+      { label: "王五 · 设计中心", value: "E1003" },
+      { label: "赵六 · 市场中心", value: "E1004" },
     ],
   },
   rows: [],

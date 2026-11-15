@@ -17,6 +17,8 @@ import { ANTD_COMPONENTS, type AntdControl } from "./components";
 import { antdMaterials } from "./materials";
 import { antdDesignerKit } from "./designer";
 import { antdActionAdapter } from "./actions";
+import { AntdThemeProvider } from "./app";
+import { TabItemsEditor } from "./designer/TabItemsEditor";
 
 /**
  * designer kit 的控件契约（DesignerControlProps）与渲染物料契约（ControlProps）不同，
@@ -29,7 +31,12 @@ export const antdAdapter: UiAdapter<AntdControl> = defineReactAdapter<AntdContro
   components: ANTD_COMPONENTS,
   materials: antdMaterials,
   designer: designerKit,
+  // 标签项结构化编辑器：type=tabItems 的字段据此弹出维护弹窗（re0BNA）
+  editors: { tabItems: TabItemsEditor as unknown as AntdControl },
   actions: antdActionAdapter,
+  // 主题 / 弹层挂载容器 / z-index 基准：由引擎 ProviderRoot 自动包在渲染器与设计器根上，
+  // 宿主不必再手动套 AntdConfigProvider（未配置时引擎直接渲染子树，零额外 DOM）。
+  provider: AntdThemeProvider as unknown as AntdControl,
 });
 
 export { ANTD_COMPONENTS, type AntdControl } from "./components";
@@ -37,5 +44,5 @@ export { antdMaterials, ANTD_FIELD_PATCHES, ANTD_EXTRA_MATERIALS } from "./mater
 export { antdDesignerKit } from "./designer";
 export { antdActionAdapter, runActions, setAntdAppContext } from "./actions";
 export type { AntdActionContext } from "./actions";
-export { AntdAppBridge, AntdConfigProvider } from "./app";
+export { AntdAppBridge, AntdConfigProvider, AntdThemeProvider } from "./app";
 export { missingComponents } from "@x-ac/web-design-core";

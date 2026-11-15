@@ -22,7 +22,7 @@ const LOCAL_ENGINE_ALIAS = [
  *
  * 引擎解析策略（关键）：
  * - `serve`（pnpm dev）：alias 到兄弟仓 project/packages/{core,react}/src，
- *   浏览器里跑的就是当前工作区的 1.1.0 引擎（含 visibility / ConditionBuilder）；
+ *   浏览器里跑的就是当前工作区的 1.3.0 引擎（含 visibility / ConditionBuilder）；
  * - `build`（build:example / pages:build）：不启用 alias，仍解析 node_modules 的已发布
  *   ^1.0.0 依赖，保证 Pages 产物与 npm 发布链路一致，不把本地源码打进静态资源。
  */

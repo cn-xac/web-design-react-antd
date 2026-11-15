@@ -104,3 +104,18 @@
     min-width: 0;
   }
 }
+
+/* ===== 弹层层级 =====
+ * 设计器弹窗 .wbd-modal 的 z-index 是 2000，而 antd 弹层默认 1050
+ * （zIndexPopupBase 1000 + 50），所以「外部数据源」等弹窗里的下拉会被压在弹窗下面。
+ * antd 通过内联 style 写 z-index，普通规则覆盖不了，这里用 !important 统一抬到 3000。
+ * 配合 AntdConfigProvider 的 theme.token.zIndexPopupBase，不套 Provider 时也生效。
+ */
+.ant-select-dropdown,
+.ant-cascader-dropdown,
+.ant-tree-select-dropdown,
+.ant-picker-dropdown,
+.ant-dropdown,
+.ant-tooltip {
+  z-index: 3000 !important;
+}

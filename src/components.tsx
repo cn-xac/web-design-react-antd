@@ -36,9 +36,11 @@ import {
   Switch,
   Table,
   Tag,
+  TreeSelect,
   Typography,
 } from "antd";
 import dayjs from "dayjs";
+import { TabsBlock } from "./blocks/TabsBlock";
 
 /** 渲染器透传的属性集合；比 core 的 ControlProps 更贴近实际透传内容 */
 export interface AntdControlProps {
@@ -480,15 +482,46 @@ const CascaderField = ({ value, onChange, placeholder, disabled, style, options,
 /* core 清单里带业务语义的三个协议物料，用 antd 基础控件落地，避免适配层出现置灰缺口。
    业务系统若有专用组织树 / 字典服务，可用 registerMaterials() 覆盖同名实现。 */
 
+/** 组织树：与 Vue 版 FieldOrgPicker 的层级保持一致（集团 → 中心 → 组 / 分公司 → 部门） */
+const ORG_TREE = [
+  {
+    value: "hq",
+    title: "集团总部",
+    children: [
+      {
+        value: "hq-tech",
+        title: "技术中心",
+        children: [
+          { value: "hq-tech-fe", title: "前端组" },
+          { value: "hq-tech-be", title: "后端组" },
+        ],
+      },
+      { value: "hq-product", title: "产品中心", children: [{ value: "hq-product-pm", title: "产品组" }] },
+      { value: "hq-design", title: "设计中心" },
+    ],
+  },
+  {
+    value: "sh",
+    title: "上海分公司",
+    children: [
+      { value: "sh-sales", title: "销售部" },
+      { value: "sh-ops", title: "运营部" },
+    ],
+  },
+];
+
 const OrgPickerField = ({ value, onChange, placeholder, disabled, style }: AntdControlProps) => (
-  <Input
-    value={str(value)}
+  <TreeSelect
+    value={str(value) || undefined}
     placeholder={placeholder ?? "请选择组织"}
     disabled={bool(disabled)}
-    readOnly
-    style={style}
-    suffix={<span aria-hidden="true">⋯</span>}
-    onClick={() => onChange?.(str(value))}
+    style={{ ...style, width: style?.width ?? "100%" }}
+    treeData={ORG_TREE}
+    treeDefaultExpandAll
+    showSearch
+    treeNodeFilterProp="title"
+    allowClear
+    onChange={(next) => onChange?.(next ?? "")}
   />
 );
 
@@ -555,6 +588,7 @@ export const ANTD_COMPONENTS = prefixedComponents<Control>({
   alert: AlertBlock,
   image: Picture,
   table: TableBlock,
+  tabs: TabsBlock,
   link: Link,
   input: TextField,
   textarea: TextField,

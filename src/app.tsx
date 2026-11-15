@@ -26,9 +26,42 @@ export interface AntdConfigProviderProps {
   children?: ReactNode;
 }
 
+/**
+ * 弹层统一挂到 body。
+ *
+ * antd 的 Select / TreeSelect / Cascader / DatePicker 等弹层若留在局部容器里，
+ * 会被容器的 overflow 裁剪、或与被撑高的兄弟层叠压住（表现是「下拉出来了但在下面」）。
+ * 挂到 body 后只受视口约束，层级也不受局部 stacking context 影响。
+ */
+const toBody = (): HTMLElement => document.body;
+
+/**
+ * 弹层基准层级：antd 默认 zIndexPopupBase=1000（下拉即 1050），
+ * 而设计器弹窗 .wbd-modal 是 2000，弹窗内的下拉会被压在下面。
+ * 抬到 3000 让弹层恒在弹窗之上（styles.css 里还有一条 !important 兜底）。
+ */
+const THEME = { token: { zIndexPopupBase: 3000 } };
+
+/**
+ * 纯主题 / 弹层容器 Provider（renderless，不插入任何 DOM）。
+ *
+ * 作为 UiAdapter.provider 交给引擎：SchemaRenderer 与 SchemaDesigner 会自动在根节点包一层，
+ * 宿主不必再手动套 AntdConfigProvider。antd 的 ConfigProvider 不产生包裹元素，
+ * 因此不影响原有高度链与样式选择器（这点和 <App> 不同，<App> 会插一层 div.ant-app）。
+ *
+ * 需要 App context（message / Modal 的主题同步）时，宿主仍可在外层再套 AntdConfigProvider。
+ */
+export function AntdThemeProvider({ children }: { children?: ReactNode }) {
+  return (
+    <ConfigProvider getPopupContainer={toBody} theme={THEME}>
+      {children}
+    </ConfigProvider>
+  );
+}
+
 export function AntdConfigProvider({ children }: AntdConfigProviderProps) {
   return (
-    <ConfigProvider>
+    <ConfigProvider getPopupContainer={toBody} theme={THEME}>
       <App>
         <AntdAppBridge />
         {children}
