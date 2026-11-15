@@ -14,6 +14,7 @@ import type { ColProps } from "antd";
 import { parseOptions, prefixedComponents } from "@x-ac/web-design-core";
 import {
   Alert,
+  AutoComplete,
   Button,
   Card,
   Cascader,
@@ -283,6 +284,7 @@ function TextField({
   maxlength,
   showCount,
   rows,
+  options,
 }: AntdControlProps) {
   const common = {
     value: str(value),
@@ -300,6 +302,24 @@ function TextField({
         rows={Number(rows) || 3}
         showCount={bool(showCount)}
         onChange={(event) => onChange?.(event.target.value)}
+      />
+    );
+  }
+  // 配了候选项（手动选项 / 选项数据源 / 外部数据源写入 options.<节点ID>）时，
+  // 切成可点选的 AutoComplete；点选一条即把显示文本回填到绑定路径。
+  const candidates = parseOptions(options).map((item) => item.label).filter(Boolean);
+  if (candidates.length) {
+    return (
+      <AutoComplete
+        value={str(value)}
+        placeholder={placeholder}
+        disabled={bool(disabled)}
+        style={style}
+        onBlur={onBlur}
+        options={candidates.map((label) => ({ value: label, label }))}
+        filterOption={(input, option) => String(option?.value ?? "").includes(input)}
+        onChange={(next) => onChange?.(next)}
+        onSelect={(next) => onChange?.(String(next))}
       />
     );
   }
