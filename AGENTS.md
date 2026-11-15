@@ -303,6 +303,12 @@ const adapter = registerMaterials(antdAdapter, [
 7. **`data` initial scope uses `form.<id>` keys**, not bare node ids, for auto-bound controls.
 8. **Don't wrap `<App>` manually for toasts** unless you call `setAntdAppContext(App.useApp())`; otherwise
    the adapter falls back to antd static `message`/`Modal` (works, but theme won't sync with `ConfigProvider`).
+9. **Blank grid columns — `ant-col-*-0` means `display:none` (ruusBU, fixed).** core `ec-col` defaults
+   `xs/sm/md/lg/xl/xxl` to `0`, meaning "inherit the generic width". antd treats `0` as a real span and emits
+   `.ant-col-xs-0` … `.ant-col-xxl-0`, whose CSS is `display:none` — the whole column and its children vanish.
+   `breakpointSize()` in `src/components.tsx` normalizes 0 / empty / invalid / out-of-range values to
+   `undefined`; only an explicit `span: 0` keeps the `.ant-col-0` collapse semantics. `colSpan()` also stops
+   a missing `span` from being coerced to `0` by `|| 0`.
 
 ---
 

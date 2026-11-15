@@ -10,6 +10,7 @@
  *   组件按需取用，不认识的属性忽略，避免 React 把未知属性打到 DOM 上。
  */
 import type { CSSProperties, ReactNode } from "react";
+import type { ColProps } from "antd";
 import { parseOptions, prefixedComponents } from "@x-ac/web-design-core";
 import {
   Alert,
@@ -60,6 +61,34 @@ const num = (value: unknown): number | undefined =>
   value === undefined || value === null || value === "" ? undefined : Number(value);
 const optionsOf = (raw: unknown) => parseOptions(raw).map((item) => ({ label: item.label, value: item.value }));
 
+/**
+ * 响应式断点归一（修复「栅格列中的内容不显示」）。
+ *
+ * core 的 ec-col 默认把 xs/sm/md/lg/xl/xxl 都写成 0，语义是「沿用通用宽度」；
+ * 但 antd 把 0 当作有效 span，生成 ant-col-*-0，而该类的样式是 display:none
+ * （antd grid/style 的 genLoopGridColumnsStyle：i === 0 → display: none）。
+ * 六个断点全为 0 时，任何屏宽下整列连同子节点都会被隐藏。
+ * 因此 0 / 空 / 非数字 / 越界一律不传给 antd；对象形态（{ span, offset, ... }）
+ * 是 antd 原生支持的断点配置，原样透传。
+ */
+function breakpointSize(raw: unknown): ColProps["xs"] {
+  if (raw === undefined || raw === null || raw === "") return undefined;
+  if (typeof raw === "object") return raw as ColProps["xs"];
+  const value = Number(raw);
+  return Number.isFinite(value) && value > 0 && value <= 24 ? value : undefined;
+}
+
+/**
+ * span 归一：显式 0 保留「折叠隐藏」语义（ant-col-0）；
+ * 缺省 / 非数字不能再被 `|| 0` 误判成 0 而把整列隐藏，越界值夹到 0..24。
+ */
+function colSpan(raw: unknown): number | undefined {
+  if (raw === undefined || raw === null || raw === "") return undefined;
+  const value = Number(raw);
+  if (!Number.isFinite(value)) return undefined;
+  return Math.max(0, Math.min(24, value));
+}
+
 /* ---------------- 展示 / 布局 ---------------- */
 
 const Container = ({ children, style, onClick }: AntdControlProps) => (
@@ -86,12 +115,13 @@ type RowAlign = "top" | "middle" | "bottom" | "stretch";
 /**
  * 栅格行：core 物料 ec-row，原生由 antd Row 实现。
  * gutter / gutterVertical 合并为 antd 的 [水平, 垂直] 数组；align=stretch antd 原生支持。
+ * justify / align 的空值归一为 undefined，避免把空串当枚举传给 antd 生成无效类名。
  */
 const RowBlock = ({ children, style, gutter, gutterVertical, justify, align, wrap }: AntdControlProps) => (
   <AntdRow
     gutter={[num(gutter) ?? 0, num(gutterVertical) ?? 0]}
-    justify={str(justify) as RowJustify}
-    align={str(align) as RowAlign}
+    justify={(str(justify) || undefined) as RowJustify | undefined}
+    align={(str(align) || undefined) as RowAlign | undefined}
     wrap={wrap === undefined ? true : bool(wrap)}
     style={style}
   >
@@ -101,20 +131,20 @@ const RowBlock = ({ children, style, gutter, gutterVertical, justify, align, wra
 
 /**
  * 栅格列：core 物料 ec-col，原生由 antd Col 实现。
- * span 走 Number(span)（0 表示隐藏，与 antd 语义一致）；响应式断点 0 表示「沿用通用宽度」，归一为 undefined。
+ * 断点 0 必须归一为 undefined（详见 breakpointSize），否则整列被 display:none 隐藏。
  */
 const ColBlock = ({ children, style, span, offset, order, flex, xs, sm, md, lg, xl, xxl }: AntdControlProps) => (
   <AntdCol
-    span={Number(span) || 0}
+    span={colSpan(span)}
     offset={Number(offset) || 0}
     order={num(order) ?? undefined}
     flex={str(flex) || undefined}
-    xs={num(xs) ?? undefined}
-    sm={num(sm) ?? undefined}
-    md={num(md) ?? undefined}
-    lg={num(lg) ?? undefined}
-    xl={num(xl) ?? undefined}
-    xxl={num(xxl) ?? undefined}
+    xs={breakpointSize(xs)}
+    sm={breakpointSize(sm)}
+    md={breakpointSize(md)}
+    lg={breakpointSize(lg)}
+    xl={breakpointSize(xl)}
+    xxl={breakpointSize(xxl)}
     style={style}
   >
     {children}
