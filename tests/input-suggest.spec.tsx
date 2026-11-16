@@ -53,4 +53,41 @@ describe("输入框：多条数据作为下拉候选", () => {
 
     expect(container.querySelector(".ant-select")).toBeTruthy();
   });
+
+  // antd AutoComplete 用内部 rc-input：直接派发原生 input 事件驱动 onChange。
+  function typeInto(value: string): void {
+    const input = container.querySelector("input") as HTMLInputElement;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+    act(() => {
+      setter.call(input, value);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  }
+
+  it("搜索过滤后只剩一条候选时自动回填整条 label", () => {
+    const onChange = vi.fn();
+    render({
+      value: "",
+      options: "张三/ZS001,李四/ZS002",
+      onChange,
+    });
+
+    typeInto("张三");
+    expect(onChange).toHaveBeenCalledWith("张三/ZS001");
+  });
+
+  it("多条候选匹配时不自动回填，交给用户点选", () => {
+    const onChange = vi.fn();
+    render({
+      value: "",
+      options: "张三/ZS001,张三丰/ZS003",
+      onChange,
+    });
+
+    typeInto("张三");
+    // 只应收到用户原样输入，不应收到某条完整 label
+    expect(onChange).toHaveBeenCalledWith("张三");
+    expect(onChange).not.toHaveBeenCalledWith("张三/ZS001");
+    expect(onChange).not.toHaveBeenCalledWith("张三丰/ZS003");
+  });
 });

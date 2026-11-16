@@ -9,7 +9,7 @@
  * - 其余 Schema 属性由渲染器原样透传（options / placeholder / disabled / style ...），
  *   组件按需取用，不认识的属性忽略，避免 React 把未知属性打到 DOM 上。
  */
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import type { ColProps } from "antd";
 import { parseOptions, prefixedComponents } from "@x-ac/web-design-core";
 import {
@@ -288,6 +288,16 @@ function TextField({
   rows,
   options,
 }: AntdControlProps) {
+  // lastQuery 跟踪上一次输入，用于区分「输入」与「退格」：
+  // 新值是上次的真前缀 = 退格 → 不自动选中，避免刚回填的完整 label 被吸附回去、无法逐字删除。
+  // 必须在早退分支之前无条件调用（React hooks 规则）。
+  const lastQuery = useRef("");
+  const text = str(value);
+  useEffect(() => {
+    // 输入框被清空时重置基准，否则「清空后重输相同前缀」会被误判为退格。
+    if (!text) lastQuery.current = "";
+  }, [text]);
+
   const common = {
     value: str(value),
     placeholder,
@@ -307,21 +317,39 @@ function TextField({
       />
     );
   }
+
   // 配了候选项（手动选项 / 选项数据源 / 外部数据源写入 options.<节点ID>）时，
   // 切成可点选的 AutoComplete；点选一条即把显示文本回填到绑定路径。
   const candidates = parseOptions(options).map((item) => item.label).filter(Boolean);
   if (candidates.length) {
+    const handleChange = (next: unknown): void => {
+      const q = str(next);
+      const keyword = q.trim();
+      const matched = keyword ? candidates.filter((label) => label.includes(keyword)) : candidates;
+      const isDeleting = q.length < lastQuery.current.length && lastQuery.current.startsWith(q);
+      // 过滤后唯一且仍在输入 → 等价于点选自动回填；多条不自动选，交给用户点。
+      if (keyword && matched.length === 1 && !isDeleting && text !== matched[0]) {
+        lastQuery.current = matched[0]!;
+        onChange?.(matched[0]);
+        return;
+      }
+      lastQuery.current = q;
+      onChange?.(next);
+    };
     return (
       <AutoComplete
-        value={str(value)}
+        value={text}
         placeholder={placeholder}
         disabled={bool(disabled)}
         style={style}
         onBlur={onBlur}
         options={candidates.map((label) => ({ value: label, label }))}
-        filterOption={(input, option) => String(option?.value ?? "").includes(input)}
-        onChange={(next) => onChange?.(next)}
-        onSelect={(next) => onChange?.(String(next))}
+        filterOption={(input, option) => String(option?.value ?? "").includes(String(input ?? "").trim())}
+        onChange={handleChange}
+        onSelect={(next) => {
+          lastQuery.current = String(next ?? "");
+          onChange?.(String(next));
+        }}
       />
     );
   }
