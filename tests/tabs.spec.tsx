@@ -75,3 +75,35 @@ describe("标签页：内容按 schema 协议渲染为页面", () => {
     expect(el.textContent).toContain("内嵌页面内容");
   });
 });
+
+describe("标签页：pane 容器按 paneId 渲染（rGjzDs）", () => {
+  it("design 页签渲染对应 pane 容器里的内容", () => {
+    const page: PageSchema = {
+      ...createEmptyPage(),
+      children: [
+        {
+          id: "tabs1",
+          component: "ec-tabs",
+          props: { items: [{ id: "a", label: "概览", content: "design" }] },
+          children: [
+            {
+              id: "pane_a",
+              component: "ec-container",
+              props: { paneId: "a" },
+              children: [{ id: "t1", component: "ec-text", props: { text: "页签里的内容" } }],
+            },
+          ],
+        },
+      ],
+    };
+
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    act(() => {
+      root!.render(<SchemaRenderer page={page} ui={antdAdapter} />);
+    });
+
+    expect(container.textContent).toContain("页签里的内容");
+  });
+});

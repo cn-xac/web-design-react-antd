@@ -8,8 +8,8 @@
  *   两者都按 schema 协议用 SchemaFragment 递归渲染，共用宿主 scope；
  * - 设计态只读预览：不请求接口、不挂事件。
  */
-import { Children, isValidElement, useContext, useEffect, useMemo, useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import { Children, Fragment, isValidElement, useContext, useEffect, useMemo, useState } from "react";
+import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { Tabs } from "antd";
 import {
   getByPath,
@@ -31,15 +31,27 @@ interface TabsBlockProps {
   children?: ReactNode;
 }
 
+/** 展平 Fragment 与嵌套数组，拿到真正的 pane 容器元素 */
+function flattenChildren(children: ReactNode): ReactElement[] {
+  const out: ReactElement[] = [];
+  Children.forEach(children, (child) => {
+    if (!isValidElement(child)) return;
+    if (child.type === Fragment) {
+      out.push(...flattenChildren((child.props as { children?: ReactNode }).children));
+      return;
+    }
+    out.push(child);
+  });
+  return out;
+}
+
 /** 从 children 里按 paneId 取出某个页签的容器节点元素 */
 function paneChildOf(children: ReactNode, paneId: string): ReactNode {
-  let found: ReactNode = null;
-  Children.forEach(children, (child) => {
-    if (found || !isValidElement(child)) return;
+  const hit = flattenChildren(children).find((child) => {
     const node = (child.props as { node?: { props?: { paneId?: unknown } } }).node;
-    if (node?.props?.paneId === paneId) found = child;
+    return node?.props?.paneId === paneId;
   });
-  return found;
+  return hit ?? null;
 }
 
 interface RemoteState {
