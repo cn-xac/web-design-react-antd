@@ -9,7 +9,7 @@ import type { CSSProperties } from "react";
 import { Button, Input, Modal, Select } from "antd";
 import { createTabId, type TabItem } from "@x-ac/web-design-core";
 
-type ContentKind = "text" | "dataPath" | "url";
+type ContentKind = "design" | "dataPath" | "url";
 
 export interface TabItemsDialogProps {
   items: TabItem[];
@@ -25,14 +25,17 @@ const GRID: CSSProperties = {
 };
 
 function contentKind(row: TabItem): ContentKind {
+  if (row.content === "dataPath" || row.content === "url") return row.content;
   if (row.dataPath) return "dataPath";
   if (row.url) return "url";
-  return "text";
+  return "design";
 }
 
 export function TabItemsDialog({ items, onSave, onClose }: TabItemsDialogProps) {
   const [rows, setRows] = useState<TabItem[]>(
-    items.length ? items.map((item) => ({ ...item })) : [{ id: createTabId(), label: "标签一", text: "" }],
+    items.length
+      ? items.map((item) => ({ ...item, content: item.content ?? "design" }))
+      : [{ id: createTabId(), label: "标签一", content: "design" }],
   );
   const [dragIndex, setDragIndex] = useState(-1);
   const [overIndex, setOverIndex] = useState(-1);
@@ -45,20 +48,23 @@ export function TabItemsDialog({ items, onSave, onClose }: TabItemsDialogProps) 
     setRows((prev) =>
       prev.map((row, i) => {
         if (i !== index) return row;
-        const rest = { ...row };
-        if (kind === "text") {
+        const rest: TabItem = { ...row, content: kind };
+        if (kind === "design") {
           delete rest.dataPath;
           delete rest.url;
           delete rest.method;
+          delete rest.text;
           return rest;
         }
         if (kind === "dataPath") {
           delete rest.url;
           delete rest.method;
+          delete rest.text;
           rest.dataPath = row.dataPath ?? "";
           return rest;
         }
         delete rest.dataPath;
+        delete rest.text;
         rest.url = row.url ?? "";
         rest.method = row.method ?? "get";
         return rest;
@@ -84,11 +90,10 @@ export function TabItemsDialog({ items, onSave, onClose }: TabItemsDialogProps) 
         const item: TabItem = { id: row.id, label: row.label.trim() };
         if (row.mark?.trim()) item.mark = row.mark.trim();
         const kind = contentKind(row);
-        if (kind === "text") {
-          if (row.text) item.text = row.text;
-        } else if (kind === "dataPath") {
+        item.content = kind;
+        if (kind === "dataPath") {
           if (row.dataPath?.trim()) item.dataPath = row.dataPath.trim();
-        } else if (row.url?.trim()) {
+        } else if (kind === "url" && row.url?.trim()) {
           item.url = row.url.trim();
           item.method = row.method ?? "get";
         }
@@ -143,14 +148,14 @@ export function TabItemsDialog({ items, onSave, onClose }: TabItemsDialogProps) 
               value={contentKind(row)}
               onChange={(v) => setKind(index, v as ContentKind)}
               options={[
-                { label: "文本", value: "text" },
+                { label: "设计器内编辑", value: "design" },
                 { label: "绑定数据", value: "dataPath" },
                 { label: "外部 URL", value: "url" },
               ]}
             />
 
-            {contentKind(row) === "text" && (
-              <Input size="small" placeholder="页签内容" value={row.text ?? ""} onChange={(e) => patch(index, { text: e.target.value })} />
+            {contentKind(row) === "design" && (
+              <span style={{ fontSize: 11, color: "#8b93a5", paddingLeft: 2 }}>在画布里向该页签拖入组件</span>
             )}
             {contentKind(row) === "dataPath" && (
               <Input size="small" placeholder="如 form.detailSchema" value={row.dataPath ?? ""} onChange={(e) => patch(index, { dataPath: e.target.value })} />
@@ -184,7 +189,7 @@ export function TabItemsDialog({ items, onSave, onClose }: TabItemsDialogProps) 
         <Button
           size="small"
           type="link"
-          onClick={() => setRows((prev) => [...prev, { id: createTabId(), label: `标签${prev.length + 1}`, text: "" }])}
+          onClick={() => setRows((prev) => [...prev, { id: createTabId(), label: `标签${prev.length + 1}`, content: "design" }])}
         >
           + 新增标签项
         </Button>

@@ -15,6 +15,7 @@ import {
   materialKey,
   mergeFields,
   tagPortability,
+  withDataDrivenFields,
   type Material,
   type PropField,
 } from "@x-ac/web-design-core";
@@ -109,15 +110,17 @@ const ANTD_EXTRA_RAW: Material[] = [
     icon: "▭",
     owner: "adapter",
     portable: false,
+    // 页签内容由 pane 容器承载，children 按 paneId 分发
+    paneSlotKey: "paneId",
     defaultProps: {
       items: [
-        { id: "tab1", label: "基本信息", text: "第一页内容" },
-        { id: "tab2", label: "扩展配置", text: "第二页内容" },
+        { id: "tab1", label: "基本信息", content: "design" },
+        { id: "tab2", label: "扩展配置", content: "design" },
       ],
       active: "基本信息",
     },
     fields: [
-      { key: "items", label: "标签项", type: "tabItems", group: "content", portability: "content", tip: "维护标题、标记与内容来源（文本 / 绑定数据 / 外部 URL）" },
+      { key: "items", label: "标签项", type: "tabItems", group: "content", portability: "content", tip: "维护标题、标记与内容来源（设计器内编辑 / 绑定数据 / 外部 URL）" },
       { key: "active", label: "默认选中", type: "text", group: "basic", portability: "behavior", tip: "填标签标题或自定义标记，可写 {{}} 交给数据控制" },
       {
         key: "type",
@@ -151,6 +154,6 @@ const ANTD_EXTRA_MATERIALS: Material[] = ANTD_EXTRA_RAW.map((material) =>
   tagPortability({ ...material, owner: "adapter", portable: false }),
 );
 
-export const antdMaterials: Material[] = [...patched, ...ANTD_EXTRA_MATERIALS];
+export const antdMaterials: Material[] = withDataDrivenFields([...patched, ...ANTD_EXTRA_MATERIALS]);
 
 export { ANTD_FIELD_PATCHES, ANTD_EXTRA_MATERIALS };

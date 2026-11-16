@@ -8,8 +8,8 @@
  *   两者都按 schema 协议用 SchemaFragment 递归渲染，共用宿主 scope；
  * - 设计态只读预览：不请求接口、不挂事件。
  */
-import { useContext, useEffect, useMemo, useState } from "react";
-import type { CSSProperties } from "react";
+import { Children, isValidElement, useContext, useEffect, useMemo, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Tabs } from "antd";
 import {
   getByPath,
@@ -27,6 +27,19 @@ interface TabsBlockProps {
   active?: unknown;
   type?: unknown;
   tabPosition?: unknown;
+  /** 渲染器传入的 pane 容器节点（SchemaNode 元素，props.node 带 paneId） */
+  children?: ReactNode;
+}
+
+/** 从 children 里按 paneId 取出某个页签的容器节点元素 */
+function paneChildOf(children: ReactNode, paneId: string): ReactNode {
+  let found: ReactNode = null;
+  Children.forEach(children, (child) => {
+    if (found || !isValidElement(child)) return;
+    const node = (child.props as { node?: { props?: { paneId?: unknown } } }).node;
+    if (node?.props?.paneId === paneId) found = child;
+  });
+  return found;
 }
 
 interface RemoteState {
@@ -92,7 +105,7 @@ function resolveKey(tabs: TabItem[], active: unknown): string {
   return at >= 0 ? String(at) : "0";
 }
 
-export function TabsBlock({ style, items, active, type, tabPosition }: TabsBlockProps) {
+export function TabsBlock({ style, items, active, type, tabPosition, children }: TabsBlockProps) {
   const tabs = useMemo(() => parseTabItems(items), [items]);
   // 首帧就要有正确的 activeKey：antd 在 activeKey 为空时不渲染任何 pane，
   // 若只用 effect 异步补齐，首屏会空一帧（测试里表现为内嵌内容始终不出现）
@@ -102,11 +115,15 @@ export function TabsBlock({ style, items, active, type, tabPosition }: TabsBlock
     setCurrent(resolveKey(tabs, active));
   }, [tabs, active]);
 
-  const tabItems = tabs.map((tab, index) => ({
-    key: String(index),
-    label: tab.label,
-    children: <TabPanel tab={tab} />,
-  }));
+  const tabItems = tabs.map((tab, index) => {
+    const pane = tab.content === "design" ? paneChildOf(children, tab.id) : null;
+    return {
+      key: String(index),
+      label: tab.label,
+      // design 来源优先渲染渲染器分发的 pane 容器（可拖拽 / 数据驱动），其余走既有内容解析
+      children: pane ?? <TabPanel tab={tab} />,
+    };
+  });
 
   const kind = type === "card" || type === "border-card" ? "card" : "line";
   // antd 6 用 start / end 表示左右，Schema 沿用通用的 left / right，这里做一次映射
