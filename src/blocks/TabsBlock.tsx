@@ -116,11 +116,11 @@ export function TabsBlock({ style, items, active, type, tabPosition, children }:
   }, [tabs, active]);
 
   const tabItems = tabs.map((tab, index) => {
-    const pane = tab.content === "design" ? paneChildOf(children, tab.id) : null;
+    // 有 pane 容器就优先渲染（可拖拽 / 数据驱动），不依赖 content 字段，兼容旧页面
+    const pane = paneChildOf(children, tab.id);
     return {
       key: String(index),
       label: tab.label,
-      // design 来源优先渲染渲染器分发的 pane 容器（可拖拽 / 数据驱动），其余走既有内容解析
       children: pane ?? <TabPanel tab={tab} />,
     };
   });
