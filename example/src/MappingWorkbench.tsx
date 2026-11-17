@@ -9,6 +9,7 @@ import { Tabs } from "antd";
 import { UrlMappingPanel } from "./UrlMappingPanel";
 import { SchemaPageDemo } from "./SchemaPageDemo";
 import { BuildRenderDemo } from "./BuildRenderDemo";
+import { MountMappingDemo } from "./MountMappingDemo";
 
 export function MappingWorkbench() {
   const [tab, setTab] = useState("states");
@@ -34,6 +35,7 @@ export function MappingWorkbench() {
           { key: "states", label: "四态测试", children: <UrlMappingPanel /> },
           { key: "full", label: "完整实例", children: <SchemaPageDemo /> },
           { key: "build", label: "构建与渲染", children: <BuildRenderDemo /> },
+          { key: "mount", label: "容器挂载映射", children: <MountMappingDemo /> },
         ]}
         style={{ width: "100%" }}
       />
