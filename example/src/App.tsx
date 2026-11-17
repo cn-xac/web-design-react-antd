@@ -24,8 +24,7 @@ import { antdAdapter } from "@x-ac/web-design-react-antd";
 import { PAGE_ID, seedPage, seedData } from "./schema";
 import { AdapterPanel } from "./AdapterPanel";
 import { GalleryPanel } from "./GalleryPanel";
-import { UrlMappingPanel } from "./UrlMappingPanel";
-import { SchemaPageDemo } from "./SchemaPageDemo";
+import { MappingWorkbench } from "./MappingWorkbench";
 
 type TabKey = "designer" | "runtime" | "mapping" | "gallery" | "adapter";
 
@@ -230,10 +229,7 @@ export default function App() {
           </section>
         ) : tab === "mapping" ? (
           <section className="demo__panel demo__panel--mapping">
-            <div className="demo__mapping-stack">
-              <UrlMappingPanel />
-              <SchemaPageDemo />
-            </div>
+            <MappingWorkbench />
           </section>
         ) : tab === "gallery" ? (
           <section className="demo__panel demo__panel--gallery">
