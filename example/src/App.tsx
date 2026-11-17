@@ -24,8 +24,9 @@ import { antdAdapter } from "@x-ac/web-design-react-antd";
 import { PAGE_ID, seedPage, seedData } from "./schema";
 import { AdapterPanel } from "./AdapterPanel";
 import { GalleryPanel } from "./GalleryPanel";
+import { UrlMappingPanel } from "./UrlMappingPanel";
 
-type TabKey = "designer" | "runtime" | "gallery" | "adapter";
+type TabKey = "designer" | "runtime" | "mapping" | "gallery" | "adapter";
 
 interface EventLine {
   kind: "hook" | "notify" | "submit" | "blocked";
@@ -133,6 +134,7 @@ export default function App() {
                 options={[
                   { label: "设计器", value: "designer" },
                   { label: "渲染器", value: "runtime" },
+                  { label: "映射测试", value: "mapping" },
                   { label: "组件实例", value: "gallery" },
                   { label: "适配包清单", value: "adapter" },
                 ]}
@@ -224,6 +226,10 @@ export default function App() {
                 submitForm）由 core 执行，宿主能力（消息 / 确认框）由本适配包提供。
               </Typography.Paragraph>
             </aside>
+          </section>
+        ) : tab === "mapping" ? (
+          <section className="demo__panel demo__panel--mapping">
+            <UrlMappingPanel />
           </section>
         ) : tab === "gallery" ? (
           <section className="demo__panel demo__panel--gallery">
