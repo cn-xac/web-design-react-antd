@@ -15,6 +15,7 @@ export function MappingWorkbench() {
 
   return (
     <div
+      className="mapping-workbench"
       style={{
         display: "flex",
         flex: 1,
@@ -26,6 +27,7 @@ export function MappingWorkbench() {
       }}
     >
       <Tabs
+        className="mapping-workbench__tabs"
         activeKey={tab}
         onChange={setTab}
         items={[
@@ -33,7 +35,7 @@ export function MappingWorkbench() {
           { key: "full", label: "完整实例", children: <SchemaPageDemo /> },
           { key: "build", label: "构建与渲染", children: <BuildRenderDemo /> },
         ]}
-        style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, width: "100%" }}
+        style={{ width: "100%" }}
       />
     </div>
   );

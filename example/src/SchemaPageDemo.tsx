@@ -66,11 +66,14 @@ export function SchemaPageDemo() {
   return (
     <section
       style={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        minHeight: 0,
         background: "#fff",
         border: "1px solid #e5e6eb",
         borderRadius: 8,
         padding: 18,
-        marginTop: 16,
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
@@ -108,7 +111,7 @@ export function SchemaPageDemo() {
       ) : null}
 
       {page ? (
-        <div style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: 16, marginTop: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: 16, marginTop: 14, flex: 1, minHeight: 0, overflow: "hidden" }}>
           <div style={{ minWidth: 0 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h4 style={{ margin: "0 0 8px", fontSize: 13, color: "#4e5969" }}>表单数据（映射到页面控件）</h4>

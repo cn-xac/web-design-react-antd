@@ -348,10 +348,37 @@ body {
 /* ===== 映射测试（URL 取数 + JSON 解析成页面完整实例） ===== */
 .demo__panel--mapping {
   flex-direction: column;
-  overflow: auto;
+  overflow: hidden;
 }
 .demo__mapping-stack {
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+/* 映射测试子 tab：逐层撑满高度，内容区各自内部滚动 */
+.mapping-workbench__tabs.ant-tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.mapping-workbench__tabs .ant-tabs-nav {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+}
+.mapping-workbench__tabs .ant-tabs-content-holder {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.mapping-workbench__tabs .ant-tabs-content,
+.mapping-workbench__tabs .ant-tabs-tabpane {
+  height: 100%;
+  min-height: 0;
+}
+.mapping-workbench__tabs .ant-tabs-tabpane {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
