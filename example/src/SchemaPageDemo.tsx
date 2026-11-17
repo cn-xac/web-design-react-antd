@@ -69,6 +69,7 @@ export function SchemaPageDemo() {
         display: "flex",
         flexDirection: "column",
         flex: 1,
+        height: "100%",
         minHeight: 0,
         background: "#fff",
         border: "1px solid #e5e6eb",
@@ -150,7 +151,7 @@ export function SchemaPageDemo() {
             </Typography.Paragraph>
           </div>
 
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, display: "flex", flexDirection: "column", overflow: "auto" }}>
             <h4 style={{ margin: "0 0 8px", fontSize: 13, color: "#4e5969" }}>渲染结果 · 由 JSON 生成的真实页面</h4>
             <div
               style={{
@@ -158,7 +159,8 @@ export function SchemaPageDemo() {
                 background: "#fafbfc",
                 border: "1px solid #e5e6eb",
                 borderRadius: 6,
-                maxHeight: 560,
+                flex: 1,
+                minHeight: 0,
                 overflow: "auto",
               }}
             >

@@ -98,7 +98,7 @@ export function BuildRenderDemo() {
   };
 
   return (
-    <section style={{ display: "flex", flex: 1, minHeight: 0 }}>
+    <section style={{ display: "flex", flex: 1, height: "100%", minHeight: 0 }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, flex: 1, minWidth: 0, minHeight: 0 }}>
         {/* 左：固定构建好的 Schema，直接渲染 */}
         <div

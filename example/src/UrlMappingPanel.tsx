@@ -124,7 +124,7 @@ export function UrlMappingPanel() {
     phase === "success" ? "green" : phase === "loading" ? "blue" : phase === "idle" ? "default" : "red";
 
   return (
-    <section style={{ display: "flex", gap: 16, flex: 1, minHeight: 0 }}>
+    <section style={{ display: "flex", gap: 16, flex: 1, height: "100%", minHeight: 0 }}>
       <div
         style={{
           width: 380,
