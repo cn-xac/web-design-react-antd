@@ -25,6 +25,7 @@ import { PAGE_ID, seedPage, seedData } from "./schema";
 import { AdapterPanel } from "./AdapterPanel";
 import { GalleryPanel } from "./GalleryPanel";
 import { UrlMappingPanel } from "./UrlMappingPanel";
+import { SchemaPageDemo } from "./SchemaPageDemo";
 
 type TabKey = "designer" | "runtime" | "mapping" | "gallery" | "adapter";
 
@@ -229,7 +230,10 @@ export default function App() {
           </section>
         ) : tab === "mapping" ? (
           <section className="demo__panel demo__panel--mapping">
-            <UrlMappingPanel />
+            <div className="demo__mapping-stack">
+              <UrlMappingPanel />
+              <SchemaPageDemo />
+            </div>
           </section>
         ) : tab === "gallery" ? (
           <section className="demo__panel demo__panel--gallery">
